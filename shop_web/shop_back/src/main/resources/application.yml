@@ -1,0 +1,13 @@
+server:
+  port: 8080
+
+dubbo:
+  registry:
+    address: zookeeper://192.168.177.211:2181
+  application:
+    name: backuser
+  consumer:
+    check: false
+spring:
+  thymeleaf:
+    cache: false

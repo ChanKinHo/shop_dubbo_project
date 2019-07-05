@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <base th:href="${#request.getContextPath() + '/'}">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Insert title here</title>
+    <!-- Invalid Stylesheet. This makes stuff look pretty. Remove it if you want the CSS completely valid -->
+    <!-- Reset Stylesheet -->
+    <link rel="stylesheet" href="resources/css/reset.css" type="text/css"
+          media="screen" />
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="resources/css/style.css" type="text/css"
+          media="screen" />
+    <link rel="stylesheet" href="resources/css/invalid.css" type="text/css"
+          media="screen" />
+
+    <!--                       Javascripts                       -->
+    <!-- jQuery -->
+    <script type="text/javascript"
+            src="resources/scripts/jquery-1.8.3.min.js"></script>
+     <!--jQuery Configuration -->
+    <!--<script type="text/javascript"-->
+            <!--src="resources/scripts/simpla.jquery.configuration.js"></script>-->
+
+    <!-- 添加弹框的jquery插件 -->
+    <script type="text/javascript" src="resources/widget/dialog/jquery-ui-1.9.2.custom.min.js"></script>
+    <link rel="stylesheet" href="//apps.bdimg.com/libs/jqueryui/1.10.4/css/jquery-ui.min.css">
+
+</head>
+<body>
+<div id="main-content">
+    <div class="content-box">
+        <!-- End .content-box-header -->
+        <div class="content-box-content">
+            <div class="tab-content default-tab" id="tab1">
+                <table>
+                    <thead>
+                    <tr>
+                        <th><input class="check-all" type="checkbox" /></th>
+                        <th>编号</th>
+                        <th>用户名</th>
+                        <th>姓名</th>
+                        <th>入职时间</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="user : ${backUsers}">
+                        <td><input type="checkbox" /></td>
+                        <td th:text="${user.id}"></td>
+                        <td th:text="${user.username}"></td>
+                        <td th:text="${user.name}"></td>
+                        <td th:text="${#dates.format(user.createTime,'yyyy-MM-hh')}"></td>
+                        <td>
+                            <!-- Icons -->
+                            <a href="#" title="Edit"><img
+                                src="resources/images/icons/pencil.png" alt="Edit" /></a>
+                            <a
+                                href="#" title="Delete"><img
+                                src="resources/images/icons/cross.png" alt="Delete" /></a>
+                            <a
+                                th:onclick="|show_role(${user.id})|" title="Edit Meta"><img
+                                src="resources/images/icons/hammer_screwdriver.png"
+                                alt="编辑用户角色" /></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="6">
+                            <div class="bulk-actions align-left">
+                                <a sec:authorize-url="/backUsers/insert" class="mybutton" onclick="open_dialog()">添加职工</a>
+                            </div>
+                            <!--<div class="pagination">-->
+                                <!--<a href="#" title="First Page">&laquo; First</a><a href="#"-->
+                                                                                   <!--title="Previous Page">&laquo; Previous</a> <a href="#"-->
+                                                                                                                                 <!--class="number" title="1">1</a> <a href="#" class="number"-->
+                                                                                                                                                                   <!--title="2">2</a> <a href="#" class="number current" title="3">3</a>-->
+                                <!--<a href="#" class="number" title="4">4</a> <a href="#"-->
+                                                                              <!--title="Next Page">Next &raquo;</a><a href="#"-->
+                                                                                                                   <!--title="Last Page">Last &raquo;</a>-->
+                            <!--</div> &lt;!&ndash; End .pagination &ndash;&gt;-->
+                            <div class="clear"></div>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <!-- End .content-box-content -->
+    </div>
+</div>
+<!-- End #main-content -->
+
+<script>
+    //弹出添加员工的弹框
+    function open_dialog() {
+        $("#dialog_div").dialog({
+                title:"添加员工",
+                modal:true
+            }
+        );
+    }
+
+    function show_role(uid) {
+
+        $("#userID").val(uid);
+
+        //通过ajax获取所有角色
+        $.get("/role/listAjax",{"userid":uid},function (data) {
+            var html = "";
+            //遍历当前所有角色
+            for (var i=0; i<data.length; i++){
+                if (data[i].checked) {
+                    html += "<input type='checkbox' name='roleids' value='"+data[i].id + "'checked/>"+data[i].roleName+"<br/>";
+                } else {
+                    html += "<input type='checkbox' name='roleids' value='"+data[i].id + "'/>"+data[i].roleName+"<br/>";
+                }
+
+            }
+            $("#roleshow").html(html);
+        },"json");
+
+        //弹出角色选择框
+        $("#role_dialog").dialog();
+
+    }
+
+</script>
+
+<!-- 代表一个弹出框(默认隐藏) -->
+<div id="dialog_div" style="display: none">
+    <form action="/backUser/addBack" method="post">
+        用户名:<input type="text" name="username" /><br/>
+        密码:<input type="password" name="password" /><br/>
+        姓名:<input type="text" name="name" /><br/>
+        性别:<input type="radio" name="gender" value="1" />男<input type="radio" name="gender" value="0" />女<br/>
+        <input type="submit" value="添加"/>
+    </form>
+</div>
+
+<div id="role_dialog" style="display: none">
+    <form action="/backUser/updateRole" method="post">
+        <input id="userID" type="hidden" name="userid" value="" />
+
+        <div id="roleshow"></div>
+        <input type="submit" value="确定" />
+    </form>
+
+</div>
+</body>
+</html>

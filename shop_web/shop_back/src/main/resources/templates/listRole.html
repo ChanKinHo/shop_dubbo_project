@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <base th:href="${#request.getContextPath() + '/'}">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>Insert title here</title>
+    <!-- Invalid Stylesheet. This makes stuff look pretty. Remove it if you want the CSS completely valid -->
+    <!-- Reset Stylesheet -->
+    <link rel="stylesheet" href="resources/css/reset.css" type="text/css"
+          media="screen" />
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="resources/css/style.css" type="text/css"
+          media="screen" />
+    <link rel="stylesheet" href="resources/css/invalid.css" type="text/css"
+          media="screen" />
+
+    <!--                       Javascripts                       -->
+    <!-- jQuery -->
+    <script type="text/javascript"
+            src="resources/scripts/jquery-1.8.3.min.js"></script>
+     <!--jQuery Configuration -->
+    <!--<script type="text/javascript"-->
+            <!--src="resources/scripts/simpla.jquery.configuration.js"></script>-->
+
+    <!-- 添加弹框的jquery插件 -->
+    <script type="text/javascript" src="resources/widget/dialog/jquery-ui-1.9.2.custom.min.js"></script>
+    <link rel="stylesheet" href="//apps.bdimg.com/libs/jqueryui/1.10.4/css/jquery-ui.min.css">
+
+    <script type="text/javascript" src="resources/widget/zTree/jquery.ztree.all.min.js"></script>
+    <link rel="stylesheet" href="resources/widget/zTree/zTreeStyle/zTreeStyle.css">
+
+</head>
+<body>
+<div id="main-content">
+    <div class="content-box">
+        <!-- End .content-box-header -->
+        <div class="content-box-content">
+            <div class="tab-content default-tab" id="tab1">
+                <table>
+                    <thead>
+                    <tr>
+                        <th><input class="check-all" type="checkbox" /></th>
+                        <th>编号</th>
+                        <th>职位</th>
+                        <th>别名</th>
+                        <th>操作</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+                    <tr th:each="role : ${roles}">
+                        <td><input type="checkbox" /></td>
+                        <td th:text="${role.id}"></td>
+                        <td th:text="${role.roleName}"></td>
+                        <td th:text="${role.alias}"></td>
+                        <td>
+                            <!-- Icons -->
+                            <a href="#" title="Edit"><img
+                                src="resources/images/icons/pencil.png" alt="Edit" /></a>
+                            <a
+                                href="#" title="Delete"><img
+                                src="resources/images/icons/cross.png" alt="Delete" /></a>
+                            <a
+                                th:onclick="|getAllPower(${role.id})|" title="Edit Meta">
+                                <img src="resources/images/icons/hammer_screwdriver.png"
+                                alt="Edit Meta" /></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="6">
+                            <div class="bulk-actions align-left">
+                                <a class="mybutton" onclick="open_dialog()">添加职位</a>
+                            </div>
+                            <!--<div class="pagination">-->
+                                <!--<a href="#" title="First Page">&laquo; First</a><a href="#"-->
+                                                                                   <!--title="Previous Page">&laquo; Previous</a> <a href="#"-->
+                                                                                                                                 <!--class="number" title="1">1</a> <a href="#" class="number"-->
+                                                                                                                                                                   <!--title="2">2</a> <a href="#" class="number current" title="3">3</a>-->
+                                <!--<a href="#" class="number" title="4">4</a> <a href="#"-->
+                                                                              <!--title="Next Page">Next &raquo;</a><a href="#"-->
+                                                                                                                   <!--title="Last Page">Last &raquo;</a>-->
+                            <!--</div> &lt;!&ndash; End .pagination &ndash;&gt;-->
+                            <div class="clear"></div>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <!-- End .content-box-content -->
+    </div>
+</div>
+<!-- End #main-content -->
+
+<script>
+    //弹出添加员工的弹框
+    function open_dialog() {
+        $("#dialog_div").dialog({
+                title:"添加职位",
+                modal:true
+            }
+        );
+    }
+
+    var roleid;
+    var zTreeObject;
+
+
+    function updateRolePower() {
+        //得到角色id
+        var rid = roleid;
+
+        //所选的权限id
+        var pids = new Array();
+
+        var checkedNodes = zTreeObject.getCheckedNodes(true);
+        for (var i=0; i<checkedNodes.length;i++){
+            pids.push(checkedNodes[i].id);
+        }
+        
+        //ajax进行提交
+        $.post("/role/updateRolePower",{"roleid":rid,"pids":pids},function (data) {
+            if (data=="success"){
+                $("#ztree_dialog").dialog("close");
+            }
+        },'text');
+    }
+    
+    function getAllPower(rid) {
+
+        roleid = rid;
+
+        var setting = {
+                data:{
+                    key:{
+                        name:"powerName"
+                    },
+                    simpleData:{
+                        enable:true,
+                        pIdKey:"parentId"
+                    }
+                },
+                view:{
+                    //隐藏图标节点
+                    showIcon:false
+                },
+                check:{
+                    enable:true,
+                    chkboxType: {"Y":"ps", "N":"s"}
+                }
+        };
+
+        //ajax查询数据库获取所有权限树
+        $.get("/power/listAjax",{"roleid":roleid},function (data) {
+            zTreeObject = $.fn.zTree.init($("#ztreeDiv"),setting,data);
+
+            zTreeObject.expandAll(true);
+        },"json");
+
+        $("#ztree_dialog").dialog();
+
+    }
+
+</script>
+
+<!-- 代表一个弹出框(默认隐藏) -->
+<div id="dialog_div" style="display: none">
+    <form action="/role/addRole" method="post">
+        职位名称:<input type="text" name="roleName" /><br/>
+        职位昵称:<input type="text" name="alias" /><br/>
+        <input type="submit" value="添加"/>
+    </form>
+</div>
+
+<div id="ztree_dialog" style="display: none">
+    <div id="ztreeDiv" class="ztree"></div>
+    <button onclick="updateRolePower()" type="button">提交</button>
+
+</div>
+</body>
+</html>
